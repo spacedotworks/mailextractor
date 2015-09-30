@@ -6,8 +6,7 @@ import sys
 from pprint import pprint
 from urlparse import urlparse
 
-def crawl(url, num, done_list, crawl_list, email_list, filt, depth):
-	print depth
+def crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit):
 	if depth > num:
 		return
 	depth += 1
@@ -23,7 +22,7 @@ def crawl(url, num, done_list, crawl_list, email_list, filt, depth):
 		page = urllib2.urlopen(req).read()
 	except: 
 		depth,url = crawl_list.pop(0)
-		crawl(url, num, done_list, crawl_list, email_list, filt, depth)
+		crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
 		return
 	soup = bs(page)
 	# can be improved
@@ -55,13 +54,14 @@ def crawl(url, num, done_list, crawl_list, email_list, filt, depth):
 							crawl_list.append([depth,link])
 		except:
 			pass
+	num -=1
 	if crawl_list:
 		try:
 			depth,url = crawl_list.pop(0)
-			crawl(url, num, done_list, crawl_list, email_list, filt, depth)
+			crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
 		except:
 			depth,url = crawl_list.pop(0)
-			crawl(url, num, done_list, crawl_list, email_list, filt, depth)
+			crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
 		return email_list
 	else:
 		return email_list
@@ -69,13 +69,14 @@ def crawl(url, num, done_list, crawl_list, email_list, filt, depth):
 # Root url
 url =  sys.argv[1]
 pages = sys.argv[2]
+limit = sys.argv[3]
 # Append http protocol if missing
 if 'http' not in url:
 	url = 'http://' + url
 # In case no filter argument is given
 try:
-	filt = sys.argv[3]
+	filt = sys.argv[4]
 except:
 	filt = '.'
 # Run main
-crawl(url,int(pages),[],[],[], filt,0)
+crawl(url,int(pages),[],[],[], filt,0,limit)
