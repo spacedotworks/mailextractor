@@ -20,7 +20,7 @@ def crawl(url, num, done_list, crawl_list, email_list, filt):
 		crawl(crawl_list.pop(0), num, done_list, crawl_list, email_list, filt)
 		return
 	soup = bs(page)
-	emails = re.findall('\w+@\w+[.]\w+[.]*\w*',str(soup))
+	emails = re.findall('\w+@\w+\.\w{2,3}(\.\w{2})?',str(soup))
 	numbers = re.findall('[@\s][69]\d{3}[-\s]?\d{4}[\s\.]',str(soup))
 	for email in emails:
 		if email not in email_list and not email.endswith(('png','jpg')):
