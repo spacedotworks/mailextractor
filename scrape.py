@@ -6,8 +6,13 @@ import sys
 from pprint import pprint
 from urlparse import urlparse
 
-def crawl(url, num, done_list, crawl_list, email_list, filt):
+def crawl(url, num, done_list, crawl_list, email_list, filt, depth):
+	print depth
+	if depth > num:
+		return
+	depth += 1
 	ul = urlparse(url)
+	# get base url from url
 	base_url = ul.scheme + '://' + ul.netloc
 	# base case
 	if num <= 0:
@@ -17,10 +22,12 @@ def crawl(url, num, done_list, crawl_list, email_list, filt):
 	try:
 		page = urllib2.urlopen(req).read()
 	except: 
-		crawl(crawl_list.pop(0), num, done_list, crawl_list, email_list, filt)
+		depth,url = crawl_list.pop(0)
+		crawl(url, num, done_list, crawl_list, email_list, filt, depth)
 		return
 	soup = bs(page)
-	emails = re.findall('\w+@\w+\.\w{2,3}\.?\w{0,2}',str(soup))
+	# can be improved
+	emails = re.findall('\w+@\w+\.\w+\.?\w{0,2}',str(soup))
 	numbers = re.findall('[@\s][69]\d{3}[-\s]?\d{4}[\s\.]',str(soup))
 	for email in emails:
 		if email not in email_list and not email.endswith(('png','jpg')):
@@ -37,7 +44,7 @@ def crawl(url, num, done_list, crawl_list, email_list, filt):
 			link = link['href']
 			if 'http' in link and not any(x in link for x in ban):
 				if link not in done_list and link not in crawl_list and filt in link:
-					crawl_list.append(link)
+					crawl_list.append([depth,link])
 			elif 'css' not in link and not any(x in link for x in ban):
 				if link.startswith('//'):
 					link = 'http://' + link
@@ -45,18 +52,18 @@ def crawl(url, num, done_list, crawl_list, email_list, filt):
 					link = base_url + link 	
 					if link not in done_list and link not in crawl_list:
 						if filt in link:
-							crawl_list.append(link)
+							crawl_list.append([depth,link])
 		except:
 			pass
-	num -= 1
 	if crawl_list:
 		try:
-			crawl(crawl_list.pop(0), num, done_list, crawl_list, email_list, filt)
+			depth,url = crawl_list.pop(0)
+			crawl(url, num, done_list, crawl_list, email_list, filt, depth)
 		except:
-			crawl(crawl_list.pop(0), num, done_list, crawl_list, email_list, filt)
+			depth,url = crawl_list.pop(0)
+			crawl(url, num, done_list, crawl_list, email_list, filt, depth)
 		return email_list
 	else:
-		pprint(done_list)
 		return email_list
 
 # Root url
@@ -71,4 +78,4 @@ try:
 except:
 	filt = '.'
 # Run main
-crawl(url,int(pages),[],[],[], filt)
+crawl(url,int(pages),[],[],[], filt,0)
