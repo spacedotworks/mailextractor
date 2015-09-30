@@ -8,25 +8,31 @@ from urlparse import urlparse
 import multiprocessing
 import threading
 
-def crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit):
-    if depth > num:
-        return
+def crawl(q):
+  print q.empty()
+  while not q.empty():
+    vlist = q.get()
+    url, num, done_list, crawl_list, email_list, filt, depth, limit = vlist
+    print url
+    #if depth > num:
+    #    return
     depth += 1
     ul = urlparse(url)
     # get base url from url
     base_url = ul.scheme + '://' + ul.netloc
     # base case
-    if num <= 0:
-        return email_list
+    #if num <= 0:
+    #    return email_list
     done_list.append(url)
     req = urllib2.Request(url, headers={ 'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36" })
     try:
         page = urllib2.urlopen(req).read()
     except: 
-        depth,url = crawl_list.pop(0)
-        crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
-        return
-    soup = bs(page)
+        crawl(q)
+        pass
+    #    depth,url = crawl_list.pop(0)
+    #    crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
+    soup = bs(page,"html.parser")
     # can be improved
     emails = re.findall('\w+@\w+\.\w+\.?\w{0,2}',str(soup))
     numbers = re.findall('[@\s][69]\d{3}[-\s]?\d{4}[\s\.]',str(soup))
@@ -67,14 +73,14 @@ def crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit):
     if crawl_list:
         try:
             depth,url = crawl_list.pop(0)
-            crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
+            vlist = url, num, done_list, crawl_list, email_list, filt, depth, limit = vlist
+            q.put(vlist)
         except:
             depth,url = crawl_list.pop(0)
-            crawl(url, num, done_list, crawl_list, email_list, filt, depth, limit)
-        return email_list
+            vlist = url, num, done_list, crawl_list, email_list, filt, depth, limit = vlist
+            q.put(vlist)
     else:
-        return email_list
-
+        pass
 # Root url
 url =  sys.argv[1]
 pages = sys.argv[2]
@@ -91,5 +97,7 @@ except:
 vlist = [url,int(pages),[],[],[],filt,0,limit]
 q = multiprocessing.Queue()
 q.put(vlist)
-crawl()
-
+reader = multiprocessing.Process(target=crawl,args=((q),))
+reader.daemon = True
+reader.start()
+reader.join()
