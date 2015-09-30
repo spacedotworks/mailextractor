@@ -7,8 +7,6 @@ from pprint import pprint
 from urlparse import urlparse
 
 def crawl(url, num, done_list, crawl_list, email_list, filt):
-	
-	print url, num
 	ul = urlparse(url)
 	base_url = ul.scheme + '://' + ul.netloc
 	# base case
