@@ -40,10 +40,18 @@ def crawl(url, num, done_list, crawl_list, email_list, filt):
 		return email_list
 	else:
 		return email_list
+
+# Root url
 url =  sys.argv[1]
 pages = sys.argv[2]
+# Append http protocol if missing
+if 'http' not in url:
+	url = 'http://' + url
+# In case no filter argument is given
 try:
 	filt = sys.argv[3]
 except:
 	filt = '.'
+
+# Run main
 crawl(url,int(pages),[],[],[], filt)
